@@ -1,36 +1,44 @@
-CC?          ?= clang
-RUSTC        ?= rustc
-STRIP         = strip
-OPTLVL       ?= 3
-CFLAGS        = -O$(OPTLVL)
+CC?                 ?= clang
+RUSTC               ?= rustc
 ifneq ($(shell uname -s),Darwin)
-CLIBS         = -lm -lrt -ldl -lpthread
+C_LIBS               = -lm -lrt -ldl -lpthread
 endif
-RUSTFLAGS    ?= -C opt-level=$(OPTLVL)
-EXECUTABLE    = chello
-RUST_SOURCES  = $(shell find . -type f -iname "*.rs" -print)
-RUST_LIBS     = $(RUST_SOURCES:%.rs=%.a)
+EXECUTABLE           = chello
+C_SRC_DIR            = c_src
+RUST_ENV            ?= debug
+ifeq ($(RUST_ENV),release)
+CARGO_ENV_FLAG       = --release
+endif
+RUST_LIB_FILE        = libhello.a
+RUST_LIB_TARGET_DIR  = target
+RUST_LIB_DIR         = $(RUST_LIB_TARGET_DIR)/$(RUST_ENV)
+RUST_LIB             = $(RUST_LIB_DIR)/$(RUST_LIB_FILE)
+RUST_LIB_LINK        = $(RUST_LIB_FILE:lib%.a=-l%)
+RUST_SRC_DIR         = src
+RUST_LIB_HEADER_DIR  = $(RUST_SRC_DIR)/include
 
-all: $(RUST_LIBS) $(EXECUTABLE) list run
+all: rustlib $(EXECUTABLE)
 
-$(EXECUTABLE): %: %.c
-	$(CC) $@.c \
-		$(CFLAGS) \
-		-L. $(RUST_LIBS:lib%.a=-l%) \
-		$(CLIBS) \
-		-o $@ && \
-	$(STRIP) $@
+release:
+	@$(MAKE) RUST_ENV=release
 
-$(RUST_LIBS): %.a: %.rs
-	$(RUSTC) $(RUSTFLAGS) -o $@ $<
+$(EXECUTABLE): %: $(C_SRC_DIR)/%.c rustlib
+	$(CC) $(C_SRC_DIR)/$@.c \
+		-I $(RUST_LIB_HEADER_DIR) \
+		-L $(RUST_LIB_DIR) $(RUST_LIB_LINK) $(C_LIBS) \
+		-o $@
 
-list:
-	@ls -ahlF $(EXECUTABLE) $(RUST_LIBS)
+rustlib: $(RUST_LIB)
+
+$(RUST_LIB): FORCE
+	cargo build $(CARGO_ENV_FLAG)
 
 run:
 	./$(EXECUTABLE)
 
 clean:
-	rm -rf $(EXECUTABLE) $(RUST_LIBS)
+	rm -rf $(EXECUTABLE) $(RUST_LIB_TARGET_DIR)
+
+FORCE:
 
 .PHONY: all clean list run

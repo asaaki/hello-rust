@@ -1,0 +1,8 @@
+[project]
+name    = "hello"
+version = "0.1.0"
+
+[lib]
+name       = "hello"
+path       = "src/hello.rs"
+crate-type = ["staticlib"]

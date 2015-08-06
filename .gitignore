@@ -1,27 +1,19 @@
-# Object files
-*.o
-*.ko
-*.obj
-*.elf
-
-# Libraries
-*.lib
 *.a
-
-# Shared objects (inc. Windows DLLs)
+*.app
 *.dll
+*.dSYM
+*.dylib
+*.elf
+*.exe
+*.hex
+*.i*86
+*.ko
+*.lib
+*.o
+*.obj
+*.out
 *.so
 *.so.*
-*.dylib
-
-# Executables
-*.exe
-*.out
-*.app
-*.i*86
 *.x86_64
-*.hex
-
-*.dSYM
 *~
-build
+chello

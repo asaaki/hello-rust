@@ -1,15 +1,15 @@
-CC?=clang
-RUSTC?=rustc
-STRIP=strip
-OPTLVL?=3
-
-CFLAGS=-O$(OPTLVL)
-CLIBS=-lm -lrt -ldl -lpthread
-RUSTFLAGS=--opt-level $(OPTLVL)
-
-EXECUTABLE=chello
-RUST_SOURCES=$(shell find . -type f -iname "*.rs" -print)
-RUST_LIBS=$(RUST_SOURCES:%.rs=%.a)
+CC?          ?= clang
+RUSTC        ?= rustc
+STRIP         = strip
+OPTLVL       ?= 3
+CFLAGS        = -O$(OPTLVL)
+ifneq ($(shell uname -s),Darwin)
+CLIBS         = -lm -lrt -ldl -lpthread
+endif
+RUSTFLAGS    ?= -C opt-level=$(OPTLVL)
+EXECUTABLE    = chello
+RUST_SOURCES  = $(shell find . -type f -iname "*.rs" -print)
+RUST_LIBS     = $(RUST_SOURCES:%.rs=%.a)
 
 all: $(RUST_LIBS) $(EXECUTABLE) list run
 
@@ -22,10 +22,7 @@ $(EXECUTABLE): %: %.c
 	$(STRIP) $@
 
 $(RUST_LIBS): %.a: %.rs
-	$(RUSTC) $(RUSTFLAGS) $< -o $@
-
-clean:
-	rm -rf $(EXECUTABLE) $(RUST_LIBS)
+	$(RUSTC) $(RUSTFLAGS) -o $@ $<
 
 list:
 	@ls -ahlF $(EXECUTABLE) $(RUST_LIBS)
@@ -33,5 +30,7 @@ list:
 run:
 	./$(EXECUTABLE)
 
-.PHONY: all clean list run
+clean:
+	rm -rf $(EXECUTABLE) $(RUST_LIBS)
 
+.PHONY: all clean list run
